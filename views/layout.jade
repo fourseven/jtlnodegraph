@@ -2,9 +2,13 @@
 html
   head
     title= title
-    link(rel='stylesheet', href='/stylesheets/yui-reset-min.css')
-    link(rel='stylesheet', href='/stylesheets/style.css')
+    link(rel='stylesheet', media="screen, projection", href="/stylesheets/screen.css")
+    link(rel='stylesheet', media="print", href="/stylesheets/print.css")
+    //if IE
+      link(rel='stylesheet', media="screen, projection", href="/stylesheets/ie.css")
+      
     script(src='/javascripts/jquery.min.js')
+    script(src='/javascripts/core.js')
   body
     include includes/header
     div#content!= body

@@ -1,8 +1,9 @@
 header
-  form(method="post", enctype="multipart/form-data", action="/newGraph")
+  div#files
+  //form(method="post", enctype="multipart/form-data", action="/newGraph")
     fieldset
       legend General 
       p JTL File: 
-        input(type="file", name="image", onchange="handleFiles(this.files)")
+        input#file(type="file", name="image", onchange="handleFiles(this.files);")
       p
-        input(type="submit", value="Upload")
+        input#upload(type="submit", value="Upload", onclick="fileUpload(window.files[0]);")

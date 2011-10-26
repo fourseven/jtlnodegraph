@@ -41,7 +41,7 @@ app.get('/', function(req, res){
     res.render('index.jade', { title: 'My Site' });
 });
 
-app.post('/newGraph', function(req, res){
+app.post('/graph', function(req, res){
   // clear old data.
   dataObject = {};
   var body = '';
