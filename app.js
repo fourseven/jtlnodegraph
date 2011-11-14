@@ -9,11 +9,12 @@ var $ = require('jquery');
 var fs = require('fs');
 //var form = require('connect-form');
 
-var parser = new expat.Parser("UTF-8");
 var app = express.createServer();
 
 var dataObject = {};
 var tempValue = {};
+var stack = [];
+var returnedObject = {};
 
 // Configuration
 
@@ -38,12 +39,19 @@ app.configure('production', function(){
 // Routes
 
 app.get('/', function(req, res){
-    res.render('index.jade', { title: 'My Site' });
+    res.render('index.jade', { title: 'JTL node.js Graph' });
 });
 
 app.post('/graph', function(req, res){
   // clear old data.
+  var parser = new expat.Parser("UTF-8");
+  parser.addListener('startElement', customStartElement);
+  parser.addListener('endElement', customEndElement);
+  parser.addListener('text', customText);
   dataObject = {};
+  returnedObject = {
+    maxTime: 0
+  };
   var body = '';
   var header = '';
   var content_type = req.headers['content-type'];
@@ -57,7 +65,7 @@ app.post('/graph', function(req, res){
   console.log('content-length: ' + content_length);
 
   req.on('data', function(raw) {
-    console.log('received data length: ' + raw.length);
+    //console.log('received data length: ' + raw.length);
     var i = 0;
     while (i < raw.length)
       if (headerFlag) {
@@ -65,17 +73,17 @@ app.post('/graph', function(req, res){
         if (chars === '\r\n\r\n') {
           headerFlag = false;
           header = raw.slice(0, i+4).toString();
-          console.log('header length: ' + header.length);
-          console.log('header: ');
-          console.log(header);
+          //console.log('header length: ' + header.length);
+          //console.log('header: ');
+          //console.log(header);
           i = i + 4;
           // get the filename
           var result = filenameRegexp.exec(header);
           if (result[1]) {
             filename = result[1];
           }
-          console.log('filename: ' + filename);
-          console.log('header done');
+          //console.log('filename: ' + filename);
+          //console.log('header done');
         }
         else {
           i += 1;
@@ -87,7 +95,7 @@ app.post('/graph', function(req, res){
         
         parser.parse(raw.toString('binary', i, raw.length));
         i = raw.length;
-        console.log('actual file size: ' + body.length);
+        //console.log('actual file size: ' + body.length);
       }
   });
 
@@ -98,40 +106,50 @@ app.post('/graph', function(req, res){
     //parser.parse(body);
     //fs.writeFileSync(filename, body, 'binary');
     console.log('done');
-    res.send(JSON.stringify(dataObject));
+    returnedObject.series = [];
+    returnedObject.maxTime = returnedObject.maxTime / 2;
+    $.each(dataObject, function (num, value) {
+      returnedObject.series.push(value);
+    });
+    res.send(JSON.stringify(returnedObject));
   })
 });  
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 
-parser.addListener('startElement', function(name, attrs) {
+function customStartElement(name, attrs) {
   if (name==='httpSample') {
     //console.log(['startElement', name, attrs]);
     tempValue = {};
     tempValue.name = attrs.lb;
     tempValue.time = [attrs.ts, attrs.t];
+    if (returnedObject.maxTime < +attrs.t) {
+      returnedObject.maxTime = +attrs.t;
+    }
+    stack.push(tempValue);
   }
-});
-parser.addListener('endElement', function(name) {
+};
+
+function customEndElement(name) {
   if (name==='httpSample') {
-    if (tempValue.name) {
-      if (!dataObject[tempValue.name]) {
-        dataObject[tempValue.name] = {};
-        if (!dataObject[tempValue.name].data) {
-          dataObject[tempValue.name].data = [];
+    if (stack.length > 0 && stack[stack.length-1].name) {
+      if (!dataObject[stack[stack.length-1].name]) {
+        dataObject[stack[stack.length-1].name] = {name: stack[stack.length-1].name, color: 'rgba(223, 83, 83, .5)'};
+        if (!dataObject[stack[stack.length-1].name].data) {
+          dataObject[stack[stack.length-1].name].data = [];
         }
       }
-      dataObject[tempValue.name].data.push(tempValue.time);
+      dataObject[stack[stack.length-1].name].data.push(stack[stack.length-1].time);
     }
   } else if (name==='testResults') {
-    console.log(JSON.stringify(dataObject));
+    //console.log(JSON.stringify(dataObject));
   }
-});
+};
 
-parser.addListener('text', function(s) {
+function customText(s) {
   var trimmed = $.trim(s);
-  if (trimmed.length > 0) {
-    tempValue.url = trimmed;
+  if (trimmed.length > 0 && stack.length > 0) {
+    stack[stack.length-1].url = trimmed;
   }
-});
+};

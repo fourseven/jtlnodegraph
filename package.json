@@ -1,11 +1,11 @@
 {
-    "name": "application-name"
+    "name": "jtlnodegraph"
   , "version": "0.0.1"
   , "private": true
   , "dependencies": {
       "express": "2.4.3"
-    , "sass": ">= 0.0.1"
-    , "jade": ">= 0.0.1"
+    , "sass": "0.5.0"
+    , "jade": "0.16.2"
     , "connect-form": ">= 0.2.1"
     , "node-expat": ">= 1.4.0"
     , "jquery": ">= 1.6.0"

@@ -19,11 +19,14 @@ body {
     }
     background: #31343b;
     @include single-box-shadow(#222, 0, 5px, 5px, 2px);
+    
   }
   
   
   
   #content {
     margin: 20px;
+    width: auto;
+    height: 800px;
   }
 }
